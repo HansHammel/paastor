@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 'use strict';
 
+var os =require('os');
 var Paastor = require('./client');
 require('colors');
+
 
 // API endpoint to use
 var paastorUrl;
@@ -169,7 +171,7 @@ program
 .description('Get a list of servers for this account')
 .action(function () {
     client.listServers({ cookies: cookies}, handler(function (servers, res) {
-        console.log('\n');
+        console.log(os.EOL);
 
         if (!servers.length) {
             console.log(' - no servers - ');
@@ -182,14 +184,14 @@ program
             infras[s.infrastructure].push(s);
         });
         Object.keys(infras).forEach(function (key) {
-            console.log('\n infrastructure', key.cyan);
+            console.log(os.EOL+' infrastructure', key.cyan);
             infras[key].forEach(function (s) {
                 console.log('    ', s._id[ s.status == 'ok' ? 'green' : 'yellow' ]);
                 console.log('      ', s.status);
                 console.log('      ', s.ip);
             });
         });
-        console.log('\n\n  To get detailed info:   pstr server [_id]\n');
+        console.log(os.EOL+os.EOL+'  To get detailed info:   pstr server [_id]'+os.EOL);
     }));
 });
 
@@ -210,7 +212,7 @@ program
     }, handler(function (logObject, res) {
 
         if (!logObject) {
-            console.log('No logs were retrieved.\n');
+            console.log('No logs were retrieved.'+os.EOL);
             return;
         }
 
@@ -220,18 +222,18 @@ program
         console.log('------');
         console.log(logObject.stderr);
 
-        console.log('------\nend stderr'.bold);
+        console.log(('------'+os.EOL+'end stderr').bold);
         console.log('------');
 
         console.log('begin stdout'.bold);
         console.log('------');
         console.log(logObject.stdout);
 
-        console.log('------\nend stdout'.bold);
+        console.log(('------'+os.EOL+'end stdout').bold);
 
 
         if (logObject.error) {
-            console.log('Sheep returned error while reading logs:\n'.red, logObject.error, '\n');
+            console.log('Sheep returned error while reading logs:'.red+os.EOL+', logObject.error, '+os.EOL);
         }
     }));
 });
@@ -247,7 +249,7 @@ program
     }
     client.getServerInfo({ vps: _id, cookies: cookies }, handler(function (data, res) {
 
-        console.log('\n', data._id.bold.green, 'on', data.infrastructure.cyan, 'at', data.ip, '\n');
+        console.log(os.EOL, data._id.bold.green, 'on', data.infrastructure.cyan, 'at', data.ip, os.EOL);
 
 
         var info = data.info;
@@ -256,21 +258,21 @@ program
             return;
         }
 
-        console.log('  Node versions:'.bold, '\n   ',
-            info.node_versions ? info.node_versions.join(', ') : 'unknown', '\n');
+        console.log('  Node versions:'.bold, os.EOL+'   ',
+            info.node_versions ? info.node_versions.join(', ') : 'unknown', os.EOL);
 
         console.log('  CPU:'.bold);
         console.log('   ', info.cpus.length, 'cores');
         var cpuUsedPer = ((info.totalcpu - info.freecpu)/info.totalcpu * 100).toFixed(2);
         console.log('   ', cpuUsedPer + '% used');
-        console.log('\n');
+        console.log(os.EOL);
 
 
         console.log('  RAM:'.bold);
         console.log('   ', ((info.totalmem - info.freemem)/1024/1024).toFixed(2) + ' MB',
             '/', info.totalmem/1024/1024 + ' MB');
         console.log('   ', ((info.totalmem - info.freemem)/info.totalmem * 100).toFixed(2) + '% used');
-        console.log('\n');
+        console.log(os.EOL);
 
 
         console.log('  Storage:'.bold);
@@ -282,11 +284,12 @@ program
         }
         info.drives = info.drives || [];
         info.drives.forEach(function (drive) {
-            console.log('\n    ' + drive.mountpoint);
+            console.log(os.EOL);
+			console.log('    ' + drive.mountpoint);
             console.log('     ', drive.used, '/', drive.total);
             console.log('     ', drive.usedPer + '% full');
         });
-        console.log('\n');
+        console.log(os.EOL);
 
 
         // List apps on this server
@@ -329,7 +332,7 @@ program
             ]);
         });
 
-        console.log(table.toString(), '\n');
+        console.log(table.toString(), os.EOL);
     }));
 });
 
@@ -351,7 +354,7 @@ program
         return;
     }
 
-    console.log('\n  push'.bold, vpsId, appId, '\n');
+    console.log(os.EOL,'  push'.bold, vpsId, appId, os.EOL);
 
     var zipPath;
     var app;
@@ -588,15 +591,15 @@ program
             console.error('   ', (err.message || err.error || err).red);
         }
 
-        console.log('\n  Cleaning up package...');
+        console.log(os.EOL,'  Cleaning up package...');
         try {
             fs.unlinkSync(zipPath);
         } catch (ex) { }
         console.log('    Package cleaned.'.green);
 
         if (!err) {
-            console.log('\n  Push complete.'.green.bold);
-            console.log('\n');
+            console.log(os.EOL,'  Push complete.'.green.bold);
+            console.log(os.EOL);
         }
 
     });
@@ -704,7 +707,7 @@ program
                 throw new Error("  First character of variable name must be a letter");
             }
             if (/[^a-z0-9\_]/gi.test(v)) {
-                throw new Error("\n Only the following characters are allowed for an environment variable name:\n  a-z\n  A-Z\n  0-9\n  _    (underscore)\n");
+                throw new Error(os.EOL+' Only the following characters are allowed for an environment variable name:'+os.EOL+'  a-z'+os.EOL+'  A-Z'+os.EOL+'  0-9'+os.EOL+'  _    (underscore)'+os.EOL);
             }
             if (RESERVED_ENV_KEYS.indexOf(v) !== -1) {
                 throw new Error("The key " + v + " is reserved and may not be used");
@@ -733,7 +736,7 @@ program
                 return;
             }
             envVal = value;
-            prompt('\n\n------\nConfirmation:\n    ' + envKey + '=' + envVal + '\n\n(Hit enter to confirm, ctrl+c to cancel)',
+            prompt(os.EOL+os.EOL+'------'+os.EOL+'Confirmation:'+os.EOL+'    ' + envKey + '=' + envVal + os.EOL+os+EOL+'(Hit enter to confirm, ctrl+c to cancel)',
             {
                 default: 'OK', // this is here so an <enter> will allow proceeding
                 retry: false,
@@ -775,7 +778,7 @@ program
     }
     var isValidSemver = semver.valid(ver);
     if (!isValidSemver) {
-        console.error('Version must be a valid semver, like "0.10.31"', '\n  (' + ver + ')');
+        console.error('Version must be a valid semver, like "0.10.31"', os.EOL+'  (' + ver + ')');
         return;
     }
 

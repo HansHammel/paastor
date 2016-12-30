@@ -25,6 +25,7 @@
     "morgan": "^1.7.0",
     "node-mandrill": "^1.0.1",
     "node-uuid": "^1.4.7",
+    "nodemailer": "^2.7.0",
     "redis": "^2.6.3",
     "request": "^2.79.0",
     "rimraf": "^2.5.4",
@@ -33,7 +34,6 @@
     "ssh2": "^0.5.4",
     "static-favicon": "^2.0.0-alpha",
     "strength": "^0.1.4",
-    "stripe": "^4.14.0",
     "uuid": "^3.0.1"
   },
   "devDependencies": {
@@ -42,7 +42,9 @@
     "gulp-jade": "^1.1.0",
     "gulp-notify": "^2.2.0",
     "gulp-uglify": "^2.0.0",
+    "maildev": "^0.14.0",
     "mocha": "^3.2.0",
+    "open": "0.0.5",
     "should": "^11.1.2",
     "supertest": "^2.0.1"
   },

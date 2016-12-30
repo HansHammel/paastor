@@ -55,7 +55,7 @@ router.put('/confirmation/:_id/:conf', function (req, res, next) {
             return next(err);
         }
         if (!account) {
-            return res.send(404);
+            return res.status(404).send({});
         }
         account.conf = null;
         account.save(function (err, saved) {
@@ -64,7 +64,22 @@ router.put('/confirmation/:_id/:conf', function (req, res, next) {
             }
             res.send({ message: "Account confirmed. Ok to log in." });
 
-
+			// send mail with defined transport object
+			req.mailtransport.sendMail({
+				from: '"Paastor" <'+config.email.from+'>', // sender address
+				to: '"Paastor" <'+config.email.from+'>', // list of receivers comma seperated
+				subject: "[Paastor] - confirmed", // Subject line
+				text: "Confirmed account: " + saved.email + " (" + saved._id + ")" // plaintext body
+				//html: '<b>Hello world ??</b>' // html body
+			}, function(error, info){
+				if(error){
+                    debug('nodemailer error', error, info);
+                    return next(err);
+				}
+                debug('New account notification to admin.', saved.email, saved._id);
+			});
+			
+			/*
             // Emailing the administrator with a notification that somebody confirmed account
             req.mandrill('/messages/send', {
                 message: {
@@ -82,6 +97,7 @@ router.put('/confirmation/:_id/:conf', function (req, res, next) {
 
                 debug('New account notification to admin.', saved.email, saved._id);
             });
+			*/
 
         });
     });
@@ -91,7 +107,7 @@ router.put('/confirmation/:_id/:conf', function (req, res, next) {
  */
 router.put('/forgot/:email', function (req, res, next) {
     if (!req.params.email) {
-        return res.send(400, { error: "Missing email" });
+        return res.status(400).send({ error: "Missing email" });
     }
     req.Account.findOne({ email: req.params.email }, function (err, account) {
         if (err) {
@@ -106,6 +122,24 @@ router.put('/forgot/:email', function (req, res, next) {
             if (err) {
                 return next(err);
             }
+			
+			// send mail with defined transport object
+			req.mailtransport.sendMail({
+				from: '"Paastor" <'+config.email.from+'>', // sender address
+				to: '"'+acct.email+'" <'+acct.email+'>', // list of receivers comma seperated
+				subject: "Reset your Paastor password", // Subject line
+				text: "There was a request to reset your Paastor password.\nThe link below will reset it.\n\n"
+                        + config.url + '/password-reset/' + acct._id + '/' + acct.conf // plaintext body
+				//html: '<b>Hello world ??</b>' // html body
+			}, function(error, info){
+				if(error){
+                    debug('nodemailer error', error, info);
+                    return next(err);
+				}
+                debug('Passwordreset for', acct.email);
+			});
+			
+			/*
             //send an e-mail
             req.mandrill('/messages/send', {
                 message: {
@@ -122,6 +156,7 @@ router.put('/forgot/:email', function (req, res, next) {
                 }
                 res.send(message);
             });
+			*/
         });
     });
 });
@@ -137,11 +172,11 @@ router.put('/password-reset/:_id/:conf', function (req, res, next) {
             return next(err);
         }
         if (!account) {
-            return res.send(404);
+            return res.status(404).send({});
         }
         var passCheckFail = account.isPasswordInvalid(req.body.password);
         if (passCheckFail) {
-            return res.send(400, { error: passCheckFail });
+            return res.status(400).send({ error: passCheckFail });
         }
         account.password = req.body.password;
         account.conf = null;
@@ -164,15 +199,15 @@ router.post('/accounts', function (req, res, next) {
     // preliminary validations
 
     if (!req.body.email || typeof req.body.email !== 'string') {
-        return res.send(400, { error: "Email is required."});
+        return res.status(400).send({ error: "Email is required."});
     }
     if (!req.body.password || typeof req.body.password !== 'string') {
-        return res.send(400, { error: "Password is required."});
+        return res.status(400).send({ error: "Password is required."});
     }
 
     // disallow the plus sign in email address
     if (req.body.email.indexOf('+') !== -1) {
-        return res.send(400, {
+        return res.status(400).send({
             error: "At this time, we do not allow the plus (+) character in email addresses."
         });
     }
@@ -185,7 +220,7 @@ router.post('/accounts', function (req, res, next) {
             return next(err);
         }
         if (account) {
-            return res.send(400, { error: "Account already exists." });
+            return res.status(400).send({ error: "Account already exists." });
         }
 
         var newAccount = new req.Account();
@@ -195,7 +230,7 @@ router.post('/accounts', function (req, res, next) {
         var validationError = passwordNotOk || emailNotOk;
 
         if (validationError) {
-            return res.send(400, { error: validationError });
+            return res.status(400).send({ error: validationError });
         }
 
         newAccount.email = req.body.email;
@@ -206,6 +241,27 @@ router.post('/accounts', function (req, res, next) {
                 return next(err);
             }
 
+						// send mail with defined transport object
+			req.mailtransport.sendMail({
+				from: '"Paastor" <'+config.email.from+'>', // sender address
+				to: '"'+saved.email+'" <'+saved.email+'>', // list of receivers comma seperated
+				subject: "Confirm your Paastor account", // Subject line
+				text: "Thanks for signing up for Paastor. Visit this link to confirm your account. If you didn't sign up, please disregard this message.\n\n"
+                        + config.url + '/conf/' + saved._id + '/' + saved.conf // plaintext body
+				//html: '<b>Hello world ??</b>' // html body
+			}, function(error, info){
+				if(error){
+                    debug('nodemailer error', error, info);
+                    return next(err);
+				}
+                
+				// RES.SEND
+                // notice, does not log them in. need to conf account first.
+                res.send(saved);
+				debug('New Account created', saved.email, saved._id);
+			});
+			
+			/*
             // Transactional welcome and account confirmation email
             req.mandrill('/messages/send', {
                 message: {
@@ -225,9 +281,24 @@ router.post('/accounts', function (req, res, next) {
                 // notice, does not log them in. need to conf account first.
                 res.send(saved);
             });
+*/
 
-
-
+			// send mail with defined transport object
+			req.mailtransport.sendMail({
+				from: '"Paastor" <'+config.email.from+'>', // sender address
+				to: '"Paastor" <'+config.email.from+'>', // list of receivers comma seperated
+				subject: '[Paastor] - new account', // Subject line
+				text: "New account: " + saved.email + " (" + saved._id + ")" // plaintext body
+				//html: '<b>Hello world ??</b>' // html body
+			}, function(error, info){
+				if(error){
+                    debug('nodemailer error', error, info);
+                    return next(err);
+				}
+                debug('New account notification to admin.', saved.email, saved._id);
+			});
+			
+/*
             // Emailing the administrator with a notification that somebody signed up.
             req.mandrill('/messages/send', {
                 message: {
@@ -245,7 +316,7 @@ router.post('/accounts', function (req, res, next) {
 
                 debug('New account notification to admin.', saved.email, saved._id);
             });
-
+*/
 
         });
     });
@@ -258,6 +329,7 @@ router.post('/accounts', function (req, res, next) {
  * @returns Account
  */
 router.post('/login', function (req, res, next) {
+console.log(req.body);
     req.Account
     .findOne({ email: req.body.email, password: hash(req.body.password) })
     .exec(function (err, account) {
@@ -266,12 +338,12 @@ router.post('/login', function (req, res, next) {
         }
         if (!account) {
             setTimeout(function () {
-                res.send(401, { error: 'Auth failed' });
+                res.status(401).send({ error: 'Auth failed' });
             }, 500);
             return;
         }
         if (account.conf && account.conf.indexOf('conf-') !== -1) {
-            return res.send(401, { error: 'Account must be confirmed before logging in.' });
+            return res.status(401).send({ error: 'Account must be confirmed before logging in.' });
         }
         req.session.user = account.toObject();
         res.send(account);
@@ -314,7 +386,7 @@ router.delete('/login', function (req, res) {
 // Require authorization.
 router.all('*', function (req, res, next) {
     if (!req.session || !req.session.user || !req.session.user.email) {
-        res.send(401, { error: 'Not authorized' });
+        res.status(401).send({ error: 'Not authorized' });
         return;
     }
     next();
@@ -347,10 +419,10 @@ router.get('/account/subscriptions', function (req, res, next) {
 
 router.post('/account/subscriptions', function (req, res, next) {
     if (!req.body.quantity) {
-        return res.send(400, { error: "Missing quantity" });
+        return res.status(400).send({ error: 'Missing quantity' });
     }
     if (!req.body.id) {
-        return res.send(400, { error: "Missing plan or subscription" });
+        return res.status(400).send({ error: "Missing plan or subscription" });
     }
     req.Account.findOne({ email: req.session.user.email }).exec(function (err, account) {
         if (err) {
@@ -364,12 +436,12 @@ router.post('/account/subscriptions', function (req, res, next) {
 
             var qty = parseFloat(req.body.quantity);
             if (isNaN(qty)) {
-                return res.send(400, { error: "Invalid quantity" });
+                return res.status(400).send({ error: "Invalid quantity" });
             }
             qty = Math.floor(qty);
             var afterQtyRemoved = account.limit_servers + (qty);
             if (qty < 0 && afterQtyRemoved < vpsTotal) {
-                return res.send(400, { error: "Cannot remove that many subscriptions - you must delete servers first. You have " + vpsTotal + " servers." });
+                return res.status(400).send({ error: "Cannot remove that many subscriptions - you must delete servers first. You have " + vpsTotal + " servers." });
             }
 
             account.addSubscription(req.body, function (err, subscriptions) {
@@ -388,6 +460,21 @@ router.post('/account/subscriptions', function (req, res, next) {
                 if (req.body.quantity > 0) {
                     msgText += "\n\nA receipt will be sent after the payment is confirmed.";
                 }
+											
+				req.mailtransport.sendMail({
+					from: '"Paastor" <'+config.email.from+'>', // sender address
+					to: '"'+account.email+'" <'+account.email+'>', // list of receivers comma seperated
+					subject: "Confirmation of Paastor service change", // Subject line
+					text: msgText // plaintext body
+					//html: '<b>Hello world ??</b>' // html body
+				}, function(error, info){
+					if(error){
+						debug('nodemailer error', error, info);
+						return next(err);
+					}
+					debug('Paastor service change for', account.email);
+				});
+				/*
                 req.mandrill('/messages/send', {
                     message: {
                         to: [{email: account.email, name: account.email}],
@@ -400,6 +487,7 @@ router.post('/account/subscriptions', function (req, res, next) {
                         debug('mandrill error', err, data);
                     }
                 });
+				*/
 
 
             });
@@ -416,7 +504,7 @@ router.get('/account', function (req, res, next) {
             return next(err);
         }
         if (!account) {
-            res.send(404, { error: "Not logged in" });
+            res.status(404).send({ error: "Not logged in" });
             return;
         }
         var out = {};
@@ -487,11 +575,11 @@ router.patch('/account', function (req, res, next) {
             return next(err);
         }
         if (!account) {
-            return res.send(404, { error: "Account not found" });
+            return res.status(404).send({ error: "Account not found" });
         }
         var passwordSucks = account.isPasswordInvalid(req.body.password);
         if (passwordSucks) {
-            return res.send(400, { error: passwordSucks });
+            return res.status(400).send({ error: passwordSucks });
         }
         account.password = req.body.password;
         account.save(function (err, saved) {
@@ -531,7 +619,7 @@ router.get('/vps/:_id', function (req, res, next) {
             return next(err);
         }
         if (!vps) {
-            return res.send(404, { error: "Not found or still being provisioned\n" });
+            return res.status(404).send({ error: "Not found or still being provisioned\n" });
         }
 
         // if the vps is in good standing, get info about it.
@@ -586,7 +674,7 @@ router.post('/vps', function (req, res, next) {
                 return next(err);
             }
             if (count >= account.limit_servers) {
-                return res.send(400, { error: "Upgrade your plan to add more servers." });
+                return res.status(400).send({ error: "Upgrade your plan to add more servers." });
             }
             checkVpsExists();
         });
@@ -598,7 +686,7 @@ router.post('/vps', function (req, res, next) {
                 return next(err);
             }
             if (v) {
-                return res.send(400, {
+                return res.status(400).send({
                     error: 'Sorry, that server name is already taken. Please choose another.'
                 });
             }
@@ -608,22 +696,22 @@ router.post('/vps', function (req, res, next) {
 
     function makeVps() {
         if (!req.body.ip) {
-            return res.send(400, { error: "Missing ip." });
+            return res.status(400).send({ error: "Missing ip." });
         }
         if (req.body.ip.split('.').length !== 4 || isNaN(parseFloat(req.body.ip))) {
-            return res.send(400, { error: "Invalid ip." });
+            return res.status(400).send({ error: "Invalid ip." });
         }
         if (!req.body.password) {
-            return res.send(400, { error: "Missing root password." });
+            return res.status(400).send({ error: "Missing root password." });
         }
         if (!req.body._id) {
-            return res.send(400, { error: "Missing name (_id)." });
+            return res.status(400).send({ error: "Missing name (_id)." });
         }
         if (regexId.test(req.body._id)) {
-            return res.send(400, { error: "Invalid characters in name (_id), only use a-z, 0-9, and dash (-)." });
+            return res.status(400).send({ error: "Invalid characters in name (_id), only use a-z, 0-9, and dash (-)." });
         }
         if (!req.body.infrastructure || typeof req.body.infrastructure !== 'string') {
-            return res.send(400, { error: "Missing infrastructure string." });
+            return res.status(400).send({ error: "Missing infrastructure string." });
         }
 
         req.body.account = req.session.user._id;
@@ -734,7 +822,7 @@ router.post('/vps', function (req, res, next) {
  */
 router.put('/vps/:_id/update-sheep', function (req, res, next) {
     if (!req.body.password) {
-        return res.send(400, { error: "Root password is required." });
+        return res.status(400).send({ error: "Root password is required." });
     }
 
     req.Vps.findOne({ _id: req.params._id, account: req.session.user._id }).exec(function (err, vps) {
@@ -742,7 +830,7 @@ router.put('/vps/:_id/update-sheep', function (req, res, next) {
             return next(err);
         }
         if(!vps) {
-            return res.send(404);
+            return res.status(404).send({});
         }
         vps.status = 'update';
         vps.save(function (err, saved) {
@@ -779,7 +867,7 @@ router.put('/vps/:_id/update-sheep', function (req, res, next) {
  */
 router.post('/vps/:_id/redis', function (req, res, next) {
     if (!req.body.rootPassword) {
-        return res.send(400, { error: "Root password is required." });
+        return res.status(400).send({ error: "Root password is required." });
     }
 
     req.Vps.findOne({ _id: req.params._id, account: req.session.user._id }).exec(function (err, vps) {
@@ -787,7 +875,7 @@ router.post('/vps/:_id/redis', function (req, res, next) {
             return next(err);
         }
         if (!vps) {
-            return res.send(404);
+            return res.status(404).send({});
         }
         vps.status = 'install_redis';
         vps.save(function (err, saved) {
@@ -822,14 +910,14 @@ router.post('/vps/:_id/redis', function (req, res, next) {
 router.delete('/vps/:_id/redis', function (req, res, next) {
     var rootPassword = req.body.rootPassword || req.query.rootPassword;
     if (!rootPassword) {
-        return res.send(400, { error: "Root password is required to remove Redis." });
+        return res.status(400).send({ error: "Root password is required to remove Redis." });
     }
     req.Vps.findOne({ _id: req.params._id, account: req.session.user._id }).exec(function (err, vps) {
         if (err) {
             return next(err);
         }
         if (!vps) {
-            return res.send(404);
+            return res.status(404).send({});
         }
         vps.status = 'uninstall_redis';
         vps.save(function (err, saved) {
@@ -866,7 +954,7 @@ router.delete('/vps/:_id/redis', function (req, res, next) {
  */
 router.post('/vps/:_id/mongo', function (req, res, next) {
     if (!req.body.rootPassword) {
-        return res.send(400, { error: "Root password is required." });
+        return res.status(400).send({ error: "Root password is required." });
     }
 
     req.Vps.findOne({ _id: req.params._id, account: req.session.user._id }).exec(function (err, vps) {
@@ -874,7 +962,7 @@ router.post('/vps/:_id/mongo', function (req, res, next) {
             return next(err);
         }
         if(!vps) {
-            return res.send(404);
+            return res.status(404).send({});
         }
         vps.status = 'install_mongo';
         vps.save(function (err, saved) {
@@ -909,14 +997,14 @@ router.post('/vps/:_id/mongo', function (req, res, next) {
 router.delete('/vps/:_id/mongo', function (req, res, next) {
     var rootPassword = req.body.rootPassword || req.query.rootPassword;
     if (!rootPassword) {
-        return res.send(400, { error: "Root password is required to remove Mongo." });
+        return res.status(400).send({ error: "Root password is required to remove Mongo." });
     }
     req.Vps.findOne({ _id: req.params._id, account: req.session.user._id }).exec(function (err, vps) {
         if(err) {
             return next(err);
         }
         if(!vps) {
-            return res.send(404);
+            return res.status(404).send({});
         }
         vps.status = 'uninstall_mongo';
         vps.save(function (err, saved) {
@@ -958,7 +1046,7 @@ router.patch('/vps/:_id', function (req, res, next) {
             return next(err);
         }
         if(!vps) {
-            return res.send(404);
+            return res.status(404).send({});
         }
         for(var i in req.body) {
             vps[i] = req.body[i];
@@ -980,13 +1068,13 @@ router.delete('/vps/:_id', function (req, res, next) {
             return next(err);
         }
         if(!vps) {
-            return res.send(404);
+            return res.status(404).send({});
         }
         vps.remove(function (err) {
             if(err) {
                 return next(err);
             }
-            res.send(200);
+            res.status(200).send({});
         });
     });
 });
@@ -1073,7 +1161,7 @@ router.post('/vps/:vps/apps', function (req, res, next) {
  */
 router.put('/vps/:vps/apps/:_id/pkg', function (req, res, next) {
     if (!req.body.pkg || typeof req.body.pkg !== 'string') {
-        return res.send(400, { error: "pkg should be a base64 encoded zip file"});
+        return res.status(400).send({ error: "pkg should be a base64 encoded zip file"});
     }
 
     req.Vps.findById(req.params.vps).where('account', req.session.user._id).exec(function (err, vps) {

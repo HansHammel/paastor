@@ -37,15 +37,50 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var Mandrill = require('node-mandrill');
+//var Mandrill = require('node-mandrill');
 
 var home = require('./routes/home');
 var api = require('./routes/api');
 
 var dataModels = require('./models');
-var mandrill = new Mandrill(config.email.key);
-var stripe = require('stripe')(config.stripe.secret);
 
+var nodemailer = require('nodemailer');
+var exec = require('child_process').exec
+var open = require('open');
+
+debug('Starting MailDev');
+var maildev = exec('maildev', (err, stdout, stderr) =>     {
+ if (err) { debug('Error starting MailDev: ' ,err); } 
+});
+open('http://localhost:1080');
+
+process.on('exit', function () {
+    debug('Killing MailDev');
+    maildev.kill();
+});
+
+
+// create reusable transporter object using the default SMTP transport
+//var mailtransport = nodemailer.createTransport('smtp://localhost:1025');
+var mailtransport = nodemailer.createTransport({
+    host: "127.0.0.1", // hostname
+    secure: false, // use SSL
+    port: process.env.NODE_ENV == "production" ? 25: 1025, // port for secure SMTP  using maildev in development
+	/*
+    auth: {
+        user: "username@abc.co.th",
+        pass: "passwordmail"
+    },
+	*/
+    tls: {
+        rejectUnauthorized: false
+    }
+});
+
+
+//var mandrill = new Mandrill(config.email.key);
+//var stripe = require('stripe')(config.stripe.secret);
+/*
 var stripePlans = [];
 stripe.plans.list({ limit: 100 }, function (err, plans) {
     if (err) {
@@ -73,6 +108,7 @@ stripe.plans.list({ limit: 100 }, function (err, plans) {
     debug('Got ' + output.length + ' plans from Stripe');
     stripePlans = output;
 });
+*/
 
 var app = express();
 if (process.env.NODE_ENV === 'production') {
@@ -94,8 +130,10 @@ app.set('view engine', 'jade');
 
 app.use(dataModels);
 app.use(function (req, res, next) {
-    req.mandrill = mandrill;
-    req.plans = stripePlans;
+	req.mailtransport = mailtransport;
+    //req.mandrill = mandrill;
+    //req.plans = stripePlans;
+	req.plans = [];
     next();
 });
 

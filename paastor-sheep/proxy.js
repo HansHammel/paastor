@@ -16,6 +16,7 @@ var systemInfo = require('./system.json');
 
 var sheep = require('./api');
 var apiServer;
+var os = require('os');
 
 var pem = require('pem');
 var userApps;
@@ -27,6 +28,7 @@ var DEFAULT_CERT; // TODO!!
 var http = require('http');
 var https = require('https');
 var crypto = require('crypto');
+var tls = require('tls');
 var async = require('async');
 var HttpProxy = require('http-proxy');
 var Proxy = new HttpProxy.createProxy();
@@ -42,12 +44,21 @@ var files = {
 };
 
 var getCredentialsContext = function (params){
-      return crypto.createCredentials({
-        key: params.key,
-        passphrase: params.passphrase,
-        cert: params.cert,
-        ca: params.ca
-    }).context;
+	 if (tls.createSecureContext) {
+	      return tls.createSecureContext({
+		        key: params.key,
+		        passphrase: params.passphrase,
+		        cert: params.cert,
+		        ca: params.ca
+		    }).context;
+	} else {
+	      return crypto.createCredentials({
+	        key: params.key,
+	        passphrase: params.passphrase,
+	        cert: params.cert,
+	        ca: params.ca
+	    }).context;
+	}
 };
 
 var listenForExceptions = function (cb) {
@@ -56,9 +67,9 @@ var listenForExceptions = function (cb) {
      * TODO: something else?
      */
     process.on('uncaughtException', function (err) {
-        debugProcess('\n\n------ UNCAUGHT EXCEPTION ON PROXY SERVER PROCESS ------\n', err.message);
-        debugProcess(err.stack, '\n\n');
-        debugProcess('\n------ end stack trace from uncaught exception ------\n', err.message);
+        debugProcess(os.EOL+os.EOL+'------ UNCAUGHT EXCEPTION ON PROXY SERVER PROCESS ------'+os.EOL, err.message);
+        debugProcess(err.stack, os.EOL+os.EOL);
+        debugProcess(os.EOL+'------ end stack trace from uncaught exception ------'+os.EOL, err.message);
         // process.exit(1);
         // ignore
     });
@@ -66,7 +77,7 @@ var listenForExceptions = function (cb) {
 };
 
 var startMessage = function (cb) {
-    debug('\n--------------- Proxy Start ---------------\n');
+    debug(os.EOL+'--------------- Proxy Start ---------------'+os.EOL);
     debug('NODE_ENV', process.env.NODE_ENV);
     debug('api port', sheepPort);
     debug('proxy port', proxyPort);

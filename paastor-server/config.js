@@ -26,12 +26,14 @@ if (process.env.NODE_ENV === 'production') {
         password: process.env.REDIS_PASS || config.redisSession.password
     };
 
-   config.url = "https://paastor.com";
+   config.url = "https://localhost"; //https:paastor.com
    config.mongo = "some-uri"
+   /*
    config.stripe = {
         public: '',
         secret: ''
     };
+	*/
 }
 
 exports = module.exports = config;

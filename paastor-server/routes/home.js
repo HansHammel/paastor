@@ -36,7 +36,22 @@ router.get('/conf/:_id/:conf', function(req, res, next) {
                 message: 'Sign in to continue.'
             });
 
+			// send mail with defined transport object
+			req.mailtransport.sendMail({
+				from: '"Paastor" <'+config.email.from+'>', // sender address
+				to: '"Paastor" <'+config.email.from+'>', // list of receivers comma seperated
+				subject: '[Paastor] - confirmed', // Subject line
+				text: "Confirmed account: " + saved.email + " (" + saved._id + ")" // plaintext body
+				//html: '<b>Hello world ??</b>' // html body
+			}, function(error, info){
+				if(error){
+                    debug('nodemailer error', error, info);
+                    return next(err);
+				}
+                debug('Account confirmation notification to admin.', saved.email, saved._id);
+			});
 
+			/*
             // admin notification that an account has been confirmed
             req.mandrill('/messages/send', {
                 message: {
@@ -46,6 +61,7 @@ router.get('/conf/:_id/:conf', function(req, res, next) {
                     text: "Confirmed account: " + saved.email + " (" + saved._id + ")"
                 }
             },
+			
             function (err, data) {
                 if (err) {
                     debug('mandrill error', err, data);
@@ -54,6 +70,7 @@ router.get('/conf/:_id/:conf', function(req, res, next) {
 
                 debug('Account confirmation notification to admin.', saved.email, saved._id);
             });
+			*/
 
 
         });

@@ -1,5 +1,6 @@
 'use strict';
 var mongoose = require('mongoose');
+mongoose.Promise = global.Promise;
 var debug = require('debug')('mongoose');
 var ObjectId = mongoose.Schema.Types.ObjectId;
 var uuid = require('uuid');
@@ -8,7 +9,7 @@ var config = require('./config');
 var keygen = require('ssh-keygen');
 var strength = require('strength');
 var _ = require('lodash');
-var stripe = require('stripe')(config.stripe.secret);
+//var stripe = require('stripe')(config.stripe.secret);
 
 mongoose.connect(config.mongo);
 mongoose.connection.on('connected', function () {
@@ -148,6 +149,7 @@ AccountSchema.method('passwordReset', function (callback) {
 });
 // if a customer doesnt exist, create one
 AccountSchema.method('getCustomer', function (callback) {
+/*
     var doc = this;
     if (!doc.stripe) {
         stripe.customers.create(
@@ -177,6 +179,11 @@ AccountSchema.method('getCustomer', function (callback) {
         return;
     }
     stripe.customers.retrieve(doc.stripe, callback);
+	*/
+	callback(null, {
+                  email: doc.email,
+                  description: doc._id.toString()
+              });
 });
 // returns Card
 AccountSchema.method('getCard', function (callback) {
@@ -207,12 +214,14 @@ AccountSchema.method('setCard', function (cardToken, callback) {
     if (!doc.stripe) {
         return callback(new Error("Unable to create a card for a non-customer"));
     }
+	/*
     stripe.customers.update(doc.stripe, { card: cardToken }, function (err, customer) {
         if (err) {
             return callback(err);
         }
         doc.getCard(callback);
     });
+	*/
 });
 // returns array of subscriptions
 AccountSchema.method('getSubscriptions', function (callback) {
@@ -220,7 +229,7 @@ AccountSchema.method('getSubscriptions', function (callback) {
     if (!doc.stripe) {
         return callback(new Error("Unable to get subscriptions for a non-customer"));
     }
-    stripe.customers.listSubscriptions(doc.stripe, callback);
+    //stripe.customers.listSubscriptions(doc.stripe, callback);
 });
 // returns array of subscriptions
 // downgrades are done by passing a negative number to quantity
@@ -286,12 +295,14 @@ AccountSchema.method('addSubscription', function (plan, callback) {
               if (plan.coupon) {
                   sendData.coupon = plan.coupon;
               }
+			  /*
             stripe.customers.updateSubscription(
                   doc.stripe,
                   alreadySubscribed.id,
                   sendData,
                   handleSubscription
             );
+			*/
         }
         else {
             debug('new subscription', doc.email, plan.id);
@@ -303,11 +314,13 @@ AccountSchema.method('addSubscription', function (plan, callback) {
               if (plan.coupon) {
                   sendData.coupon = plan.coupon;
               }
+			  /*
             stripe.customers.createSubscription(
                 doc.stripe,
                 sendData,
                 handleSubscription
             );
+			*/
         }
     });
 });
@@ -341,6 +354,7 @@ AccountSchema.pre('validate', function (next) {
 });
 AccountSchema.post('save', function (doc) {
     if (!doc.stripe) {
+		/*
         stripe.customers.create(
               {
                   email: doc.email,
@@ -362,6 +376,7 @@ AccountSchema.post('save', function (doc) {
                   });
           }
         );
+		*/
     }
 });
 models.Account = mongoose.model('Account', AccountSchema);
