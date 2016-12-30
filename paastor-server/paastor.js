@@ -33,7 +33,7 @@ redisClient.auth(config.redisSession.password, function (err) {
 });
 
 var path = require('path');
-var favicon = require('static-favicon');
+var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
@@ -99,7 +99,7 @@ app.use(function (req, res, next) {
     next();
 });
 
-app.use(favicon());
+app.use(favicon(__dirname + '/public/favicon.png'));
 app.use(bodyParser.json({ limit: '100mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());

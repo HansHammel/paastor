@@ -2,7 +2,8 @@ var config = {
     redisSession: {
         host: 'localhost',
         port: '6379',
-        secret: ''
+        secret: 'nix',
+        password: ''
     },
     mongo: "mongodb://localhost/paastor",
     email: {
@@ -11,8 +12,8 @@ var config = {
     },
     url: "http://localhost:2999",
     stripe: {
-        public: '',
-        secret: ''
+        public: '123',
+        secret: '456'
     },
     sheepDownload: "http://localhost/or-something"
 };
