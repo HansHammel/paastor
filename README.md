@@ -1,5 +1,14 @@
 # **paastor**
 
+[![Inline docs](http://inch-ci.org/github/HansHammel/paastor.svg?branch=master)](http://inch-ci.org/github/HansHammel/paastor)
+[![star this repo](http://githubbadges.com/star.svg?user=HansHammel&repo=paastor&style=flat&color=fff&background=007ec6)](https://github.com/HansHammel/paastor)
+[![fork this repo](http://githubbadges.com/fork.svg?user=HansHammel&repo=paastor&style=flat&color=fff&background=007ec6)](https://github.com/HansHammel/paastor/fork)
+[![david dependency](https://img.shields.io/david/HansHammel/paastor.svg)](https://david-dm.org/HansHammel/paastor)
+[![david devDependency](https://img.shields.io/david/dev/HansHammel/paastor.svg)](https://david-dm.org/HansHammel/paastor)
+[![david optionalDependency](https://img.shields.io/david/optional/HansHammel/paastor.svg)](https://david-dm.org/HansHammel/paastor)
+[![david peerDependency](https://img.shields.io/david/peer/HansHammel/paastor.svg)](https://david-dm.org/HansHammel/paastor)
+[![Known Vulnerabilities](https://snyk.io/test/github/HansHammel/paastor/badge.svg)](https://snyk.io/test/github/HansHammel/paastor)
+
 *A hostable gui for deployment management of Node.js, MongoDB, and Redis apps on Ubuntu servers.*
 
 **Formerly paastor.com**, this project was open sourced and the website
