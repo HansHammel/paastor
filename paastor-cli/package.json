@@ -1,5 +1,5 @@
 {
-  "name": "paastor",
+  "name": "paastor-cli",
   "version": "0.4.7",
   "homepage": "https://paastor.com",
   "description": "CLI and Library for managing your Paastor servers and deploy apps.",

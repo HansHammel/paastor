@@ -1,0 +1,24 @@
+{
+  "name": "paastor",
+  "version": "1.0.0",
+  "description": "[![Inline docs](http://inch-ci.org/github/HansHammel/paastor.svg?branch=master)](http://inch-ci.org/github/HansHammel/paastor)\r [![star this repo](http://githubbadges.com/star.svg?user=HansHammel&repo=paastor&style=flat&color=fff&background=007ec6)](https://github.com/HansHammel/paastor)\r [![fork this repo](http://githubbadges.com/fork.svg?user=HansHammel&repo=paastor&style=flat&color=fff&background=007ec6)](https://github.com/HansHammel/paastor/fork)\r [![david dependency](https://img.shields.io/david/HansHammel/paastor.svg)](https://david-dm.org/HansHammel/paastor)\r [![david devDependency](https://img.shields.io/david/dev/HansHammel/paastor.svg)](https://david-dm.org/HansHammel/paastor)\r [![david optionalDependency](https://img.shields.io/david/optional/HansHammel/paastor.svg)](https://david-dm.org/HansHammel/paastor)\r [![david peerDependency](https://img.shields.io/david/peer/HansHammel/paastor.svg)](https://david-dm.org/HansHammel/paastor)\r [![Known Vulnerabilities](https://snyk.io/test/github/HansHammel/paastor/badge.svg)](https://snyk.io/test/github/HansHammel/paastor)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HansHammel/paastor.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/HansHammel/paastor/issues"
+  },
+  "homepage": "https://github.com/HansHammel/paastor#readme",
+  "dependencies": {
+    "paastor-cli": "file:paastor-cli",
+    "paastor-server": "file:paastor-server",
+    "paastor-sheep": "file:paastor-sheep"
+  }
+}

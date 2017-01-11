@@ -1,5 +1,5 @@
 {
-  "name": "paastor",
+  "name": "paastor-server",
   "version": "0.1.1",
   "main": "bin/www.js",
   "license": "MIT",
